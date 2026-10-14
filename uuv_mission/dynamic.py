@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .terrain import generate_reference_and_limits
 
+import pandas as pd
+
 class Submarine:
     def __init__(self):
 
@@ -76,7 +78,13 @@ class Mission:
     @classmethod
     def from_csv(cls, file_name: str):
         # You are required to implement this method
-        pass
+        data = pd.read_csv(file_name)
+        reference = data["reference"].to_numpy()
+        cave_height = data["cave_height"].to_numpy()
+        cave_depth = data["cave_depth"].to_numpy()
+        
+        return cls(reference, cave_height, cave_depth)
+        
 
 
 class ClosedLoop:
@@ -94,10 +102,15 @@ class ClosedLoop:
         actions = np.zeros(T)
         self.plant.reset_state()
 
+        epast = 0
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
             # Call your controller here
+            reference_t = mission.reference[t]
+            enow = reference_t - observation_t
+            actions[t] = self.controller(enow, epast)
+            epast = enow
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
@@ -105,3 +118,8 @@ class ClosedLoop:
     def simulate_with_random_disturbances(self, mission: Mission, variance: float = 0.5) -> Trajectory:
         disturbances = np.random.normal(0, variance, len(mission.reference))
         return self.simulate(mission, disturbances)
+
+
+
+def controller(enow, epast):
+    pass
