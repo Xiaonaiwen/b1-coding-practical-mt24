@@ -121,5 +121,3 @@ class ClosedLoop:
 
 
 
-def controller(enow, epast):
-    pass
